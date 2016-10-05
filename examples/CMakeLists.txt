@@ -114,3 +114,9 @@ add_executable(AMAT affinity.cpp)
 target_link_libraries(AMAT ${husky})
 target_link_libraries(AMAT ${HUSKY_EXTERNAL_LIB})
 husky_default_properties(AMAT)
+
+# Cube
+add_executable(Cube cube.cpp)
+target_link_libraries(Cube ${husky})
+target_link_libraries(Cube ${HUSKY_EXTERNAL_LIB})
+husky_default_properties(Cube)
