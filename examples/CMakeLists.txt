@@ -20,6 +20,11 @@ if(ORC_FOUND)
     add_definitions(-DWITH_ORC)
 endif(ORC_FOUND)
 
+if(ORC_FOUND)
+    include_directories(${ORC_INCLUDE_DIR})
+    add_definitions(-DWITH_ORC)
+endif(ORC_FOUND)
+
 set(husky husky-lib husky-io husky-core husky-base) 
 
 ### Applications
@@ -59,6 +64,12 @@ add_executable(WordCountFlume wc_mr_flume.cpp)
 target_link_libraries(WordCountFlume ${husky})
 target_link_libraries(WordCountFlume ${HUSKY_EXTERNAL_LIB})
 husky_default_properties(WordCountFlume)
+
+# WordCountORC
+add_executable(WordCountORC wc_mr_orc.cpp)
+target_link_libraries(WordCountORC ${husky})
+target_link_libraries(WordCountORC ${EXTERNAL_LIB})
+set_property(TARGET WordCountORC PROPERTY CXX_STANDARD 14)
 
 # WordCountORC
 add_executable(WordCountORC wc_mr_orc.cpp)
