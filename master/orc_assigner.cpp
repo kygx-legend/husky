@@ -11,24 +11,26 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifdef  WITH_ORC
+
+#ifdef WITH_ORC
+
+#include "master/orc_assigner.hpp"
 
 #include <fstream>
 #include <string>
 #include <utility>
 
-#include "master/orc_assigner.hpp"
-
+#include "OrcFile.hh"
 #include "boost/filesystem.hpp"
-#include "orc/OrcFile.hh"
 
-
+#include "base/log.hpp"
 #include "core/constants.hpp"
 #include "core/context.hpp"
+#include "io/input/orc_hdfs_inputstream.hpp"
 #include "master/master.hpp"
-#include "base/log.hpp"
 
 namespace husky {
+
 using orc::Reader;
 using orc::ReaderOptions;
 using orc::createReader;
@@ -61,111 +63,89 @@ void ORCBlockAssigner::master_main_handler() {
     base::log_msg(" => " + ret.first + "@" + std::to_string(ret.second));
 }
 
-void ORCBlockAssigner::master_setup_handler() { num_workers_alive = Context::get_worker_info()->get_num_workers(); }
+void ORCBlockAssigner::master_setup_handler() {
+    init_hdfs(Context::get_param("hdfs_namenode"), Context::get_param("hdfs_namenode_port"));
+    num_workers_alive = Context::get_worker_info()->get_num_workers();
+}
 
-void ORCBlockAssigner::browse_local(const std::string& url) {
-    // If url is a directory, recursively traverse all files in url
-    // TODO(yidi) here I assume that url is a valid file
+void ORCBlockAssigner::init_hdfs(const std::string& node, const std::string& port) {
+    int num_retries = 3;
+    while (num_retries--) {
+        struct hdfsBuilder* builder = hdfsNewBuilder();
+        hdfsBuilderSetNameNode(builder, node.c_str());
+        hdfsBuilderSetNameNodePort(builder, std::stoi(port));
+        fs_ = hdfsBuilderConnect(builder);
+        hdfsFreeBuilder(builder);
+        if (fs_)
+            break;
+    }
+    if (fs_) {
+        return;
+    }
+    base::log_msg("Failed to connect to HDFS " + node + ":" + port);
+}
+
+void ORCBlockAssigner::browse_hdfs(const std::string& url) {
+    if (!fs_)
+        return;
+
     try {
-        if (boost::filesystem::exists(url)) {
-            if (boost::filesystem::is_regular_file(url)) {
-                std::unique_ptr<Reader> reader;
-                ReaderOptions opts;
-                reader = createReader(readLocalFile(url), opts);
-                int rows_per_stripe = reader->getStripe(0)->getNumberOfRows();
-                if ( rows_per_stripe != 0 ) {
-                    row_batch_size = rows_per_stripe;
-                }
-                file_size[url] = reader->getNumberOfRows();
-                file_offset[url] = 0;
-                finish_dict[url] = 0;
-            } else if (boost::filesystem::is_directory(url)) {
-                // url should also be included in the finish_dict
-                finish_dict[url] = 0;
-                for (auto files : boost::filesystem::directory_iterator(url)) {
-                    std::string path = files.path().string();
-                    if (boost::filesystem::is_regular_file(path)) {
-                        std::unique_ptr<Reader> reader;
-                        ReaderOptions opts;
-                        reader = createReader(readLocalFile(path),opts);
-                        int rows_per_stripe = reader->getStripe(0)->getNumberOfRows();
-
-                        file_size[path] = reader->getNumberOfRows();
-                        file_offset[path] = 0;
-                        finish_dict[path] = 0;
-                    }
-                }
-            } else {
-                base::log_msg("Given url:"+ url +" is not a regular file or diercotry");
-            }
-        } else {
-            base::log_msg("Given url:"+ url +" doesn't exist!");
+        int num_files;
+        size_t total = 0;
+        auto& files = files_dict[url];
+        hdfsFileInfo* file_info = hdfsListDirectory(fs_, url.c_str(), &num_files);
+        for (int i = 0; i < num_files; ++i) {
+            // for every file in a directory
+            if (file_info[i].mKind != kObjectKindFile)
+                continue;
+            ReaderOptions opts;
+            reader = createReader(io::read_hdfs_file(fs_, file_info[i].mName), opts);
+            size_t num_rows = reader->getNumberOfRows();
+            files.push_back(OrcFileDesc{std::string(file_info[i].mName) + '\0', num_rows, 0});
+            total += num_rows;
         }
+        base::log_msg("Total num of rows: " + std::to_string(total));
+        hdfsFreeFileInfo(file_info, num_files);
     } catch (const std::exception& ex) {
         base::log_msg("Exception cought: ");
         base::log_msg(ex.what());
     }
 }
 
+/**
+ * @return selected_file, offset
+ */
 std::pair<std::string, size_t> ORCBlockAssigner::answer(std::string& url) {
-    // Directory or file status initialization
-    // This condition is true either when the begining of the file or 
-    // all the workers has finished reading this file or directory
-    if (finish_dict.find(url) == finish_dict.end())
-        browse_local(url);
-
-    std::pair<std::string, size_t> ret = {"", 0};  // selected_file, offset
-    if (boost::filesystem::is_regular_file(url)) {
-        if (file_offset[url] < file_size[url]) {
-            ret.first = url;
-            ret.second = file_offset[url];
-            file_offset[url] += row_batch_size;
-        } 
-    } else if (boost::filesystem::is_directory(url)) {
-        for (auto files : boost::filesystem::directory_iterator(url)) {
-            std::string path = files.path().string();
-            // if this file hasn't been finished
-            if (finish_dict.find(path) != finish_dict.end()) {
-                if (file_offset[path] < file_size[path]) {
-                    ret.first = path;
-                    ret.second = file_offset[path];
-                    file_offset[path] += row_batch_size;
-                    // no need to continue searching for next file
-                    break;
-                } else {
-                    finish_dict[path] += 1;
-                    if (finish_dict[path] == num_workers_alive) {
-                        finish_url(path);
-                    }
-                    // need to search for next file
-                    continue;
-                }
-            } 
-        }
+    if (!fs_) {
+        return {"", 0};
     }
-    // count how many workers won't ask for an answer
-    if (ret.first == "" && ret.second == 0) {
+    // Directory or file status initialization
+    // This condition is true either when the begining of the file or
+    // all the workers has finished reading this file or directory
+    if (files_dict.find(url) == files_dict.end()) {
+        browse_hdfs(url);
+        finish_dict[url] = 0;
+    }
+
+    // empty url
+    auto& files = files_dict[url];
+    if (files.empty()) {
         finish_dict[url] += 1;
         if (finish_dict[url] == num_workers_alive) {
-            finish_url(url);
+            files_dict.erase(url);
         }
+        return {"", 0};
     }
-    // Once ret hasn't been assigned value, answer(url) will not be called anymore.
-    // Reason:
-    // ret = {"", 0} => splitter: fetch_block return "" => inputformat: next return false =>
-    // executor: load break loop
+    
+    auto& file = files.back();
+    std::pair<std::string, size_t> ret = {file.filename, file.offset};
+    file.offset += io::kOrcRowBatchSize;
+
+    // remove
+    if (file.offset > file.num_of_rows)
+        files.pop_back();
+
     return ret;
-}
-
-/// Return the number of workers who have finished reading the files in
-/// the given url
-int ORCBlockAssigner::get_num_finished(std::string& url) { return finish_dict[url]; }
-
-/// Use this when all workers finish reading the files in url
-void ORCBlockAssigner::finish_url(std::string& url) {
-    file_size.erase(url);
-    file_offset.erase(url);
-    finish_dict.erase(url);
 }
 
 }  // namespace husky

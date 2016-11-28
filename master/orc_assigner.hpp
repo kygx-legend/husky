@@ -13,7 +13,7 @@
 // limitations under the License.
 #pragma once
 
-#ifdef  WITH_ORC
+#ifdef WITH_ORC
 
 #include <map>
 #include <string>
@@ -21,10 +21,17 @@
 
 #include "OrcFile.hh"
 
+#include "io/input/orc_hdfs_inputstream.hpp"
 #include "master/master.hpp"
 
-
 namespace husky {
+
+struct OrcFileDesc {
+    std::string filename;
+    size_t num_of_rows;
+    size_t offset;
+};
+
 class ORCBlockAssigner {
    public:
     ORCBlockAssigner();
@@ -32,22 +39,20 @@ class ORCBlockAssigner {
 
     void master_main_handler();
     void master_setup_handler();
-    void browse_local(const std::string& url);
+    void init_hdfs(const std::string& node, const std::string& port);
+    void browse_hdfs(const std::string& url);
     std::pair<std::string, size_t> answer(std::string& url);
-    /// Return the number of workers who have finished reading the files in
-    /// the given url
-    int get_num_finished(std::string& url);
-    /// Use this when all workers finish reading the files in url
-    void finish_url(std::string& url);
 
    private:
-    int row_batch_size = 8*1024;
+    hdfsFS fs_ = NULL;
+    // int row_batch_size = 8 * 1024;
     int num_workers_alive;
-    std::map<std::string, size_t> file_offset;
-    std::map<std::string, size_t> file_size;
+    // std::map<std::string, size_t> file_offset;
+    // std::map<std::string, size_t> file_size;
+    std::map<std::string, std::vector<OrcFileDesc>> files_dict;
     std::map<std::string, int> finish_dict;
     std::unique_ptr<orc::Reader> reader;
 };
 }  // namespace husky
 
-#endif 
+#endif

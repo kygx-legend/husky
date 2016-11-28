@@ -54,7 +54,7 @@ void ORCInputFormat::set_input(const std::string& url) {
 bool ORCInputFormat::next(boost::string_ref& ref) {
     if (buffer_.empty() || r == buffer_.size() - 1){
         clear_buffer();
-        bool success = fetch_new_block();
+        bool success = fetch_new_batch();
         if (success == false) {
             return false;
         }
@@ -65,10 +65,8 @@ bool ORCInputFormat::next(boost::string_ref& ref) {
     return true;
 }
 
-
-bool ORCInputFormat::fetch_new_block() {
-    // fetch a new block
-    buffer_ = splitter_.fetch_block();
+bool ORCInputFormat::fetch_new_batch() {
+    buffer_ = splitter_.fetch_batch();
     if (buffer_.empty()) {
         return false;
     }
