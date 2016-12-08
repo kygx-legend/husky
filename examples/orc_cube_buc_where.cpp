@@ -33,7 +33,7 @@ typedef std::map<int, int> DimMap;
 typedef std::pair<int, int> Pair;
 typedef std::pair<std::string, std::string> Filter;
 typedef std::map<int, Filter> FilterMap;
-typedef std::vector<int> Attribute;
+typedef std::vector<int> AttrIdx;
 typedef std::vector<std::string> Tuple;
 typedef std::vector<Tuple> TupleVector;
 typedef TupleVector::iterator TVIterator;
@@ -68,23 +68,46 @@ struct PairSumCombiner {
 class TreeNode {
    public:
     TreeNode() = default;
-    explicit TreeNode(Attribute&& key) : key_(std::move(key)) { visit = false; }
+    explicit TreeNode(AttrIdx&& key) : key_(std::move(key)) { visit = false; }
 
-    explicit TreeNode(const Attribute& key) : key_(key) { visit = false; }
+    explicit TreeNode(const AttrIdx& key) : key_(key) { visit = false; }
 
     ~TreeNode() = default;
 
     bool visit;
 
-    const Attribute& Key() { return key_; }
+    const AttrIdx& Key() { return key_; }
 
     std::vector<std::shared_ptr<TreeNode>>& Children() { return children_; }
 
     void add_child(std::shared_ptr<TreeNode> child) { children_.push_back(child); }
 
    private:
-    Attribute key_;
+    AttrIdx key_;
     std::vector<std::shared_ptr<TreeNode>> children_;
+};
+
+class AttrSet {
+public:
+    AttrSet() = default;
+
+    AttrSet(AttrIdx&& key, DimMap&& mapping) : key_(std::move(key)), map_(std::move(mapping)) {}
+
+    bool has(int attr) const{
+        return (std::find(key_.begin(), key_.end(), attr) != key_.end());
+    }
+
+    size_t size() const { return key_.size(); }
+
+    const int operator[](int attr) const { return map_.at(attr); }
+
+    const AttrIdx& get_attridx() const{ return key_; }
+
+    const DimMap& get_map() const{ return map_; }
+
+private:
+    AttrIdx key_;
+    DimMap map_;
 };
 
 bool is_parent(std::shared_ptr<TreeNode> parent, std::shared_ptr<TreeNode> child) {
@@ -97,7 +120,7 @@ bool is_parent(std::shared_ptr<TreeNode> parent, std::shared_ptr<TreeNode> child
     return true;
 }
 
-std::string print_key(const Attribute& key) {
+std::string print_key(const AttrIdx& key) {
     std::string out;
     for (auto& i : key) {
         out = out + std::to_string(i) + " ";
@@ -105,10 +128,9 @@ std::string print_key(const Attribute& key) {
     return out;
 }
 
-void measure(const Tuple& key_value, const Attribute& group_attributes, const Attribute& select,
-             const Attribute& key_attributes, DimMap& key_dim_map, DimMap& msg_dim_map, const int uid_dim,
-             TVIterator begin, TVIterator end, PushCombinedChannel<Pair, Group, PairSumCombiner>& post_ch,
-             Aggregator<int>& agg) {
+void measure(const Tuple& key_value, const AttrIdx& group_set, const AttrIdx& select, const AttrSet& key_attributes, const AttrSet& msg_attributes,
+             const int uid_dim, TVIterator begin, TVIterator end, PushCombinedChannel<Pair, Group, PairSumCombiner>& post_ch,
+             Aggregator<int>& num_write) {
     int count = end - begin;
     std::sort(begin, end, [uid_dim](const Tuple& a, const Tuple& b) { return a[uid_dim] < b[uid_dim]; });
     int unique = 1;
@@ -129,11 +151,11 @@ void measure(const Tuple& key_value, const Attribute& group_attributes, const At
         //         output attribute in the tuple
         //     Else,
         //         output *
-        if (std::find(key_attributes.begin(), key_attributes.end(), attr) != key_attributes.end()) {
-            out = out + key_value[key_dim_map[attr]] + "\t";
+        if (key_attributes.has(attr)) {
+            out = out + key_value[key_attributes[attr]] + "\t";
         } else {
-            if (std::find(group_attributes.begin(), group_attributes.end(), attr) != group_attributes.end()) {
-                out = out + (*begin)[msg_dim_map[attr]] + "\t";
+            if (std::find(group_set.begin(), group_set.end(), attr) != group_set.end()) {
+                out = out + (*begin)[msg_attributes[attr]] + "\t";
             } else {
                 out += "*\t";
             }
@@ -142,7 +164,7 @@ void measure(const Tuple& key_value, const Attribute& group_attributes, const At
 
     if (gpart_factor == 1) {
         out = out + std::to_string(count) + "\t" + std::to_string(unique) + "\n";
-        agg.update(1);
+        num_write.update(1);
         std::string hdfs_dest = ghdfs_dest + "/" + key_value.back();
         husky::io::HDFS::Write(ghost, gport, out, hdfs_dest, husky::Context::get_global_tid());
     } else {
@@ -151,10 +173,10 @@ void measure(const Tuple& key_value, const Attribute& group_attributes, const At
     }
 }
 
-int next_partition_dim(const Attribute& parent_key, const Attribute& child_key, DimMap& dim_map) {
+int next_partition_dim(const AttrIdx& parent_key, const AttrIdx& child_key, const DimMap& dim_map) {
     for (auto& attr : child_key) {
         if (std::find(parent_key.begin(), parent_key.end(), attr) == parent_key.end()) {
-            return dim_map[attr];
+            return dim_map.at(attr);
         }
     }
     // error
@@ -180,18 +202,17 @@ void partition(TVIterator begin, TVIterator end, const int dim, std::vector<int>
     }
 }
 
-void BUC(std::shared_ptr<TreeNode> cur_node, TupleVector& table, const Tuple& key_value, const Attribute& select,
-         const Attribute& key_attributes, DimMap& key_dim_map, DimMap& msg_dim_map, const int uid_dim, const int dim,
-         const int table_size, TVIterator begin, TVIterator end,
-         PushCombinedChannel<Pair, Group, PairSumCombiner>& post_ch, Aggregator<int>& agg) {
+void BUC(std::shared_ptr<TreeNode> cur_node, TupleVector& table, const Tuple& key_value, const AttrIdx& select, const AttrSet& key_attributes,
+    const AttrSet& msg_attributes, const int uid_dim, const int dim, TVIterator begin, TVIterator end,
+    PushCombinedChannel<Pair, Group, PairSumCombiner>& post_ch, Aggregator<int>& num_write) {
     // Measure current group
-    measure(key_value, cur_node->Key(), select, key_attributes, key_dim_map, msg_dim_map, uid_dim, begin, end, post_ch,
-            agg);
+    measure(key_value, cur_node->Key(), select, key_attributes, msg_attributes, uid_dim, begin, end, post_ch,
+            num_write);
 
     // Process children if it is not visited
     for (auto& child : cur_node->Children()) {
         // Partition table by next column
-        int next_dim = next_partition_dim(cur_node->Key(), child->Key(), msg_dim_map);
+        int next_dim = next_partition_dim(cur_node->Key(), child->Key(), msg_attributes.get_map());
         // TODO(Ruihao): handle error if next_dim == -1
         std::vector<int> next_partition_result = {};
         partition(begin, end, next_dim, next_partition_result);
@@ -199,8 +220,7 @@ void BUC(std::shared_ptr<TreeNode> cur_node, TupleVector& table, const Tuple& ke
         TVIterator k = begin;
         for (int i = 0; i < next_partition_result.size(); ++i) {
             int count = next_partition_result[i];
-            BUC(child, table, key_value, select, key_attributes, key_dim_map, msg_dim_map, uid_dim, next_dim,
-                table_size, k, k + count, post_ch, agg);
+            BUC(child, table, key_value, select, key_attributes, msg_attributes, uid_dim, next_dim, k, k + count, post_ch, num_write);
             k += count;
         }
     }
@@ -230,7 +250,7 @@ void parse_group_set(const std::string& group_filter, const Tokenizer& schema_to
     for (auto& group : group_set_tok) {
         // Encode and construct key of the node
         Tokenizer column_tok(group, comma_sep);
-        Attribute tree_key = {};
+        AttrIdx tree_key = {};
         for (auto column : column_tok) {
             auto it = std::find(schema_tok.begin(), schema_tok.end(), column);
             if (it != schema_tok.end()) {
@@ -406,7 +426,7 @@ void cube_buc() {
     Tokenizer select_tok(select_conf, comma_sep);
     Tokenizer group_filter(group_conf, brace_sep);
 
-    Attribute select;
+    AttrIdx select;
     for (auto& s : select_tok) {
         auto it = std::find(schema_tok.begin(), schema_tok.end(), s);
         if (it != schema_tok.end()) {
@@ -423,7 +443,7 @@ void cube_buc() {
     }
 
     int uid_index = -1;
-    // TODO(Ruihao): Attribute to count is hard-coded as "fuid"
+    // TODO(Ruihao): AttrIdx to count is hard-coded as "fuid"
     auto uid_it = std::find(schema_tok.begin(), schema_tok.end(), "fuid");
     if (uid_it != schema_tok.end()) {
         uid_index = std::distance(schema_tok.begin(), uid_it);
@@ -431,16 +451,14 @@ void cube_buc() {
         throw husky::base::HuskyException("Cannot find fuid");
     }
 
-    std::vector<Attribute> key_attr_vec;
-    std::vector<Attribute> msg_attr_vec;
-    std::vector<DimMap> msg_dim_map_vec;
-    std::vector<DimMap> key_dim_map_vec;
+    std::vector<AttrSet> key_attr_vec;
+    std::vector<AttrSet> msg_attr_vec;
 
     for (int i = 0; i < root_vec.size(); ++i) {
         // {key} union {msg} = {select}
         // {key} intersect {msg} = empty
-        Attribute key_attributes = root_vec[i]->Key();
-        Attribute msg_attributes;
+        AttrIdx key_attributes = root_vec[i]->Key();
+        AttrIdx msg_attributes;
         for (auto& s : select) {
             if (std::find(key_attributes.begin(), key_attributes.end(), s) == key_attributes.end()) {
                 msg_attributes.push_back(s);
@@ -460,10 +478,8 @@ void cube_buc() {
             key_dim_map[key_attributes[i]] = i;
         }
 
-        key_attr_vec.push_back(key_attributes);
-        msg_attr_vec.push_back(msg_attributes);
-        msg_dim_map_vec.push_back(msg_dim_map);
-        key_dim_map_vec.push_back(key_dim_map);
+        key_attr_vec.push_back(AttrSet(std::move(key_attributes), std::move(key_dim_map)));
+        msg_attr_vec.push_back(AttrSet(std::move(msg_attributes), std::move(msg_dim_map)));
     }
 
     // Load input and emit key\tpid\ti -> uid
@@ -475,9 +491,9 @@ void cube_buc() {
     auto& post_list = husky::ObjListFactory::create_objlist<Group>("post_list");
     auto& post_ch = husky::ChannelFactory::create_push_combined_channel<Pair, PairSumCombiner>(buc_list, post_list);
 
-    Aggregator<int> agg(0, [](int& a, const int& b) { a += b; });
-    Aggregator<int> num_tuple;
-    agg.to_keep_aggregate();
+    Aggregator<int> num_write;  // track number of records written to hdfs
+    Aggregator<int> num_tuple;  // track number of tuples read from db
+
     auto& agg_ch = husky::lib::AggregatorFactory::get_channel();
 
     auto parser = [&](boost::string_ref& chunk) {
@@ -491,7 +507,7 @@ void cube_buc() {
             auto& filter_map = filter_vec[i];
             auto& key_attributes = key_attr_vec[i];
             auto& msg_attributes = msg_attr_vec[i];
-            auto& msg_dim_map = msg_dim_map_vec[i];
+            // auto& msg_dim_map = msg_dim_map_vec[i];
             std::string key = "";
             Tuple msg(msg_attributes.size());
             std::string fuid;
@@ -502,10 +518,10 @@ void cube_buc() {
                     break;
                 }
 
-                if (std::find(key_attributes.begin(), key_attributes.end(), j) != key_attributes.end()) {
+                if (key_attributes.has(j)) {
                     key = key + col + "\t";
-                } else if (std::find(msg_attributes.begin(), msg_attributes.end(), j) != msg_attributes.end()) {
-                    msg[msg_dim_map[j]] = col;
+                } else if (msg_attributes.has(j)) {
+                    msg[msg_attributes[j]] = col;
                 } else if (j == uid_index) {
                     fuid = col;
                 }
@@ -544,13 +560,11 @@ void cube_buc() {
 
         auto& buc_root = root_vec[filter_idx];
         auto& key_attributes = key_attr_vec[filter_idx];
-        auto& key_dim_map = key_dim_map_vec[filter_idx];
-        auto& msg_dim_map = msg_dim_map_vec[filter_idx];
         auto& msg_attributes = msg_attr_vec[filter_idx];
         int uid_dim = msg_attributes.size();
 
-        BUC(buc_root, table, key_value, select, key_attributes, key_dim_map, msg_dim_map, uid_dim, 0, table.size(),
-            table.begin(), table.end(), post_ch, agg);
+        BUC(buc_root, table, key_value, select, key_attributes, msg_attributes, uid_dim, 0,
+            table.begin(), table.end(), post_ch, num_write);
     });
 
     if (gpart_factor > 1) {
@@ -560,19 +574,19 @@ void cube_buc() {
 
         husky::ObjListFactory::drop_objlist("buc_list");
 
-        husky::list_execute(post_list, {&post_ch}, {&agg_ch}, [&post_ch, &agg](Group& g) {
+        husky::list_execute(post_list, {&post_ch}, {&agg_ch}, [&post_ch, &num_write](Group& g) {
             auto& msg = post_ch.get(g);
             size_t pos = g.id().rfind("\t");
             std::string key = g.id().substr(0, pos);
             std::string w_idx = g.id().substr(pos + 1, g.id().length() - pos - 1);
             std::string hdfs_dest = ghdfs_dest + "/" + w_idx;
             std::string out = key + "\t" + std::to_string(msg.first) + "\t" + std::to_string(msg.second) + "\n";
-            agg.update(1);
+            num_write.update(1);
             husky::io::HDFS::Write(ghost, gport, out, hdfs_dest, husky::Context::get_global_tid());
         });
     }
 
-    int total_num_write = agg.get_value();
+    int total_num_write = num_write.get_value();
     if (husky::Context::get_global_tid() == 0) {
         husky::base::log_msg("Total number of rows written to HDFS: " + std::to_string(total_num_write));
     }
