@@ -68,6 +68,10 @@ endif()
 
 set(HUSKY_EXTERNAL_INCLUDE ${HUSKY_EXTERNAL_INCLUDE} CACHE INTERNAL "")
 set(HUSKY_EXTERNAL_LIB ${HUSKY_EXTERNAL_LIB} CACHE INTERNAL "")
+# ORC
+if(ORC_FOUND)
+    set(EXTERNAL_LIB ${EXTERNAL_LIB} ${ORC_L4} ${ORC_L3} ${ORC_L2} ${ORC_L1} ${ORC_L0})
+endif(ORC_FOUND)
 
 add_subdirectory(base)
 add_subdirectory(core)

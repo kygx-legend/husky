@@ -15,7 +15,7 @@
 
 include_directories(${PROJECT_SOURCE_DIR} ${HUSKY_EXTERNAL_INCLUDE})
 
-set(master_plugins nfs_assigner.cpp progress_tracker.cpp nfs_binary_assigner.cpp)
+set(master_plugins mongodb_assigner.cpp nfs_assigner.cpp orc_assigner.cpp progress_tracker.cpp nfs_binary_assigner.cpp)
 
 if(LIBHDFS3_FOUND)
     list(APPEND master_plugins hdfs_assigner.cpp hdfs_binary_assigner.cpp)
@@ -25,6 +25,10 @@ if(MONGOCLIENT_FOUND)
     list(APPEND master_plugins mongodb_assigner.cpp)
 endif(MONGOCLIENT_FOUND)
 
+if(ORC_FOUND)
+    include_directories(${ORC_INCLUDE_DIR})
+    add_definitions(-DWITH_ORC)
+endif(ORC_FOUND)
 add_library(husky-master-objs OBJECT master.cpp ${master_plugins})
 husky_default_properties(husky-master-objs)
 
