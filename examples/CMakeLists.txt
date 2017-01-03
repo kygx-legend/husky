@@ -68,14 +68,8 @@ husky_default_properties(WordCountFlume)
 # WordCountORC
 add_executable(WordCountORC wc_mr_orc.cpp)
 target_link_libraries(WordCountORC ${husky})
-target_link_libraries(WordCountORC ${EXTERNAL_LIB})
-set_property(TARGET WordCountORC PROPERTY CXX_STANDARD 14)
-
-# WordCountORC
-add_executable(WordCountORC wc_mr_orc.cpp)
-target_link_libraries(WordCountORC ${husky})
-target_link_libraries(WordCountORC ${EXTERNAL_LIB})
-set_property(TARGET WordCountORC PROPERTY CXX_STANDARD 14)
+target_link_libraries(WordCountORC ${HUSKY_EXTERNAL_LIB})
+husky_default_properties(WordCountORC)
 
 # PI
 add_executable(PI pi.cpp)

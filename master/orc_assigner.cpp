@@ -65,7 +65,7 @@ void ORCBlockAssigner::master_main_handler() {
 
 void ORCBlockAssigner::master_setup_handler() {
     init_hdfs(Context::get_param("hdfs_namenode"), Context::get_param("hdfs_namenode_port"));
-    num_workers_alive = Context::get_worker_info()->get_num_workers();
+    num_workers_alive = Context::get_worker_info().get_num_workers();
 }
 
 void ORCBlockAssigner::init_hdfs(const std::string& node, const std::string& port) {

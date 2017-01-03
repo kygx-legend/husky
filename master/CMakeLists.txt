@@ -25,16 +25,14 @@ if(MONGOCLIENT_FOUND)
     list(APPEND master_plugins mongodb_assigner.cpp)
 endif(MONGOCLIENT_FOUND)
 
-add_library(husky-master-objs OBJECT master.cpp ${master_plugins})
-husky_default_properties(husky-master-objs)
-
-set(husky-master-dep husky-io husky-core husky-base)
 if(ORC_FOUND)
     include_directories(${ORC_INCLUDE_DIR})
     add_definitions(-DWITH_ORC)
 endif(ORC_FOUND)
+add_library(husky-master-objs OBJECT master.cpp ${master_plugins})
+husky_default_properties(husky-master-objs)
 
-set(husky husky-lib husky-io husky-core husky-base)
+set(husky-master-dep husky-io husky-core husky-base)
 
 # Master
 add_executable(Master master_main.cpp $<TARGET_OBJECTS:husky-master-objs>)

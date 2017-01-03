@@ -110,7 +110,7 @@ void ORCFileSplitter::load(std::string url) {
 boost::string_ref ORCFileSplitter::fetch_batch() {
     BinStream question;
     question << url_;
-    BinStream answer = husky::Context::get_coordinator().ask_master(question, husky::TYPE_ORC_BLK_REQ);
+    BinStream answer = husky::Context::get_coordinator()->ask_master(question, husky::TYPE_ORC_BLK_REQ);
     std::string fn;
     size_t offset;
     answer >> fn;
