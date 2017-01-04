@@ -40,12 +40,11 @@ if(THRIFT_FOUND)
         flume_inputformat.cpp)
 endif(THRIFT_FOUND)
 
-list(APPEND input_cpps inputformat_store.cpp)
 if(ORC_FOUND)
-    include_directories(${ORC_INCLUDE_DIR})
-    add_definitions(-DWITH_ORC)
-    set(input_cpps ${input_cpps} orc_file_splitter.cpp orc_inputformat.cpp)
+    list(APPEND input_cpps orc_file_splitter.cpp orc_inputformat.cpp)
 endif(ORC_FOUND)
+
+list(APPEND input_cpps inputformat_store.cpp)
 
 add_library(input-objs OBJECT ${input_cpps})
 husky_default_properties(input-objs)

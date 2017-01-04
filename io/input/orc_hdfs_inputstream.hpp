@@ -20,7 +20,7 @@
 #include <mutex>
 
 #include "hdfs/hdfs.h"
-#include "OrcFile.hh"
+#include "orc/OrcFile.hh"
 
 #include "base/thread_support.hpp"
 #include "base/exception.hpp"
@@ -33,7 +33,7 @@ using husky::base::HuskyException;
 
 const int kOrcRowBatchSize = 5000;
 
-class HDFSFileInputStream : public orc::InputStream {
+class HDFSFileInputStream final : public orc::InputStream {
   public:
     HDFSFileInputStream(hdfsFS hdfs_fs, const std::string& file) {
         hdfs_fs_ = hdfs_fs;

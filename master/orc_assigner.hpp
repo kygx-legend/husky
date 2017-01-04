@@ -19,7 +19,7 @@
 #include <string>
 #include <utility>
 
-#include "OrcFile.hh"
+#include "orc/OrcFile.hh"
 
 #include "io/input/orc_hdfs_inputstream.hpp"
 #include "master/master.hpp"

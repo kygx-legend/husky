@@ -498,10 +498,10 @@ void cube_buc() {
     husky::io::ORCInputFormat infmt;
     infmt.set_input(husky::Context::get_param("input"));
 
-    auto& buc_list = husky::ObjListFactory::create_objlist<Group>("buc_list");
-    auto& buc_ch = husky::ChannelFactory::create_push_channel<Tuple>(infmt, buc_list);
-    auto& post_list = husky::ObjListFactory::create_objlist<Group>("post_list");
-    auto& post_ch = husky::ChannelFactory::create_push_combined_channel<Pair, PairSumCombiner>(buc_list, post_list);
+    auto& buc_list = husky::ObjListStore::create_objlist<Group>("buc_list");
+    auto& buc_ch = husky::ChannelStore::create_push_channel<Tuple>(infmt, buc_list);
+    auto& post_list = husky::ObjListStore::create_objlist<Group>("post_list");
+    auto& post_ch = husky::ChannelStore::create_push_combined_channel<Pair, PairSumCombiner>(buc_list, post_list);
 
     Aggregator<int> num_write;  // track number of records written to hdfs
     Aggregator<int> num_tuple;  // track number of tuples read from db
@@ -584,7 +584,7 @@ void cube_buc() {
             husky::base::log_msg("Finished BUC stage.\nStart post process...");
         }
 
-        husky::ObjListFactory::drop_objlist("buc_list");
+        husky::ObjListStore::drop_objlist("buc_list");
 
         husky::list_execute(post_list, {&post_ch}, {&agg_ch}, [&post_ch, &num_write](Group& g) {
             auto& msg = post_ch.get(g);

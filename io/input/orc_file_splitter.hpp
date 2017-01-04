@@ -18,12 +18,12 @@
 
 #include <string>
 
-#include "ColumnPrinter.hh"
-#include "hdfs/hdfs.h"
-#include "orc-config.hh"
-#include "OrcFile.hh"
-
 #include "boost/utility/string_ref.hpp"
+#include "hdfs/hdfs.h"
+#include "orc/ColumnPrinter.hh"
+#include "orc/OrcFile.hh"
+#include "orc/orc-config.hh"
+
 #include "io/input/file_splitter_base.hpp"
 
 namespace husky {
@@ -36,23 +36,18 @@ class ORCFileSplitter {
 
     // intialize the url of the orc file
     virtual void load(std::string url);
-
     boost::string_ref fetch_batch();
 
    protected:
     boost::string_ref read_by_batch(size_t offset);
 
     std::string buffer_;
-
     // url may be a directory or a file
     std::string url_;
-
     // current filename
     std::string cur_fn_;
-
     // orc reader to help to read orc files
     std::unique_ptr<orc::Reader> reader_;
-
     hdfsFS fs_;
 };
 

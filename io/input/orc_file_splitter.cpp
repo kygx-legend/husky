@@ -18,6 +18,12 @@
 
 #include <string>
 
+#include "boost/utility/string_ref.hpp"
+#include "orc/ColumnPrinter.hh"
+#include "orc/orc-config.hh"
+#include "orc/OrcFile.hh"
+#include "hdfs/hdfs.h"
+
 #include "base/log.hpp"
 #include "base/serialization.hpp"
 #include "core/constants.hpp"
@@ -142,10 +148,9 @@ boost::string_ref ORCFileSplitter::read_by_batch(size_t offset) {
                 line += "\n";
                 buffer_ += line;
             }
-            // husky::base::log_msg(std::to_string(batch->numElements));
         }
     } catch (const std::exception& e) {
-        husky::base::log_msg(e.what());
+        husky::LOG_E << e.what();
     }
     return boost::string_ref(buffer_);
 }
