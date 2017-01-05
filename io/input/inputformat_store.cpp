@@ -167,6 +167,27 @@ MongoDBInputFormat& InputFormatStore::get_mongodb_inputformat(const std::string&
 }
 #endif
 
+#ifdef WITH_ORC
+ORCInputFormat& InputFormatStore::create_orc_inputformat(const std::string& name) {
+    std::string inputformat_name =
+        name.empty() ? inputformat_name_prefix + std::to_string(default_inputformat_id++) : name;
+    ASSERT_MSG(inputformat_map.find(inputformat_name) == inputformat_map.end(),
+               "InputFormatStore::create_inputformat: Inputformat name already exists");
+    auto* orc_input_format = new ORCInputFormat();
+    inputformat_map.insert({inputformat_name, orc_input_format});
+    return *orc_input_format;
+}
+
+ORCInputFormat& InputFormatStore::get_orc_inputformat(const std::string& name) {
+    ASSERT_MSG(inputformat_map.find(name) != inputformat_map.end(),
+               "InputFormatStore::get_inputformat: Inputformat name doesn't exist");
+    auto* ret = dynamic_cast<ORCInputFormat*>(inputformat_map[name]);
+    ASSERT_MSG(ret != nullptr,
+               "InputFormatStore::get_orc_inputformat: given name is not of type ORCInputFormat");
+    return *ret;
+}
+#endif
+
 void InputFormatStore::drop_inputformat(const std::string& name) {
     ASSERT_MSG(inputformat_map.find(name) != inputformat_map.end(),
                "InputFormatStore::drop_inputformat: InputFormat name doesn't exist");

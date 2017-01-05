@@ -26,6 +26,9 @@
 #ifdef WITH_MONGODB
 #include "io/input/mongodb_inputformat.hpp"
 #endif
+#ifdef WITH_ORC
+#include "io/input/orc_inputformat.hpp"
+#endif
 #include "io/input/separator_inputformat.hpp"
 #include "io/input/xml_inputformat.hpp"
 
@@ -67,6 +70,12 @@ class InputFormatStore {
     // Create MongoDBInputFormat
     static MongoDBInputFormat& create_mongodb_inputformat(const std::string& name = "");
     static MongoDBInputFormat& get_mongodb_inputformat(const std::string& name = "");
+#endif
+
+#ifdef WITH_ORC
+    // Create ORCInputFormat
+    static ORCInputFormat& create_orc_inputformat(const std::string& name = "");
+    static ORCInputFormat& get_orc_inputformat(const std::string& name = "");
 #endif
 
     static void drop_inputformat(const std::string& name);

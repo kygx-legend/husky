@@ -495,7 +495,7 @@ void cube_buc() {
     }
 
     // Load input and emit key\tpid\ti -> uid
-    husky::io::ORCInputFormat infmt;
+    auto& infmt = husky::io::InputFormatStore::create_orc_inputformat();
     infmt.set_input(husky::Context::get_param("input"));
 
     auto& buc_list = husky::ObjListStore::create_objlist<Group>("buc_list");
@@ -584,7 +584,7 @@ void cube_buc() {
             husky::base::log_msg("Finished BUC stage.\nStart post process...");
         }
 
-        husky::ObjListStore::drop_objlist("buc_list");
+        //husky::ObjListStore::drop_objlist("buc_list");
 
         husky::list_execute(post_list, {&post_ch}, {&agg_ch}, [&post_ch, &num_write](Group& g) {
             auto& msg = post_ch.get(g);
