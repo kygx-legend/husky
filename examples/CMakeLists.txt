@@ -20,6 +20,11 @@ if(LIBHDFS3_FOUND)
     add_definitions(-DWITH_HDFS)
 endif(LIBHDFS3_FOUND)
 
+if(ORC_FOUND)
+    include_directories(${ORC_INCLUDE_DIR})
+    add_definitions(-DWITH_ORC)
+endif(ORC_FOUND)
+
 if(MONGOCLIENT_FOUND)
     include_directories(${MONGOCLIENT_INCLUDE_DIR})
     add_definitions(-DWITH_MONGODB)
@@ -46,6 +51,12 @@ add_executable(WordCountFlume wc_mr_flume.cpp)
 target_link_libraries(WordCountFlume ${husky})
 target_link_libraries(WordCountFlume ${EXTERNAL_LIB})
 set_property(TARGET WordCountFlume PROPERTY CXX_STANDARD 14)
+
+# WordCountORC
+add_executable(WordCountORC wc_mr_orc.cpp)
+target_link_libraries(WordCountORC ${husky})
+target_link_libraries(WordCountORC ${EXTERNAL_LIB})
+set_property(TARGET WordCountORC PROPERTY CXX_STANDARD 14)
 
 # PI
 add_executable(PI pi.cpp)
@@ -100,3 +111,9 @@ add_executable(SVM svm.cpp)
 target_link_libraries(SVM ${husky})
 target_link_libraries(SVM ${EXTERNAL_LIB})
 set_property(TARGET SVM PROPERTY CXX_STANDARD 14)
+
+# Cube
+add_executable(Cube cube.cpp)
+target_link_libraries(Cube ${husky})
+target_link_libraries(Cube ${EXTERNAL_LIB})
+set_property(TARGET Cube PROPERTY CXX_STANDARD 14)
