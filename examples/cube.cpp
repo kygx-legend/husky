@@ -543,8 +543,9 @@ void cube_buc() {
                 msg.push_back(fuid);
                 if (gpart_factor > 1) {
                     int bucket = std::stoi(fuid) % gpart_factor;
-                    key = key + "p" + std::to_string(bucket) + "\t" + std::to_string(i);
+                    key = key + "p" + std::to_string(bucket);
                 }
+                key = key + "\t" + std::to_string(i);
                 buc_ch.push(msg, key);
             }
         }
@@ -566,8 +567,10 @@ void cube_buc() {
 
         int filter_idx = std::stoi(key_value.back());
         key_value.pop_back();
-        // Remove the hash value
-        key_value.pop_back();
+        if (gpart_factor > 1) {
+            // Remove the hash value
+            key_value.pop_back();
+        }
         key_value.push_back("w" + std::to_string(filter_idx));
 
         auto& buc_root = root_vec[filter_idx];
