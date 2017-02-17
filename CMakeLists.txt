@@ -80,10 +80,15 @@ add_subdirectory(core)
 add_subdirectory(io)
 add_subdirectory(lib)
 add_subdirectory(examples)
-add_subdirectory(master)
 add_subdirectory(test)
 add_subdirectory(benchmarks)
 
 # libhusky.a
-set(husky-objs $<TARGET_OBJECTS:channel-objs> $<TARGET_OBJECTS:base-objs> $<TARGET_OBJECTS:core-objs> ${io-objs} ${lib-objs})
-add_library(husky STATIC ${husky-objs})
+include_directories(${PROJECT_SOURCE_DIR} ${HUSKY_EXTERNAL_INCLUDE})
+set(CPP_FILES ${BASE_CPP_FILES} ${CORE_CPP_FILES} ${IO_CPP_FILES} ${LIB_CPP_FILES})
+file(GLOB_RECURSE UNITTESTS *_unittest.cpp)
+list(REMOVE_ITEM CPP_FILES ${UNITTESTS})
+add_library(husky SHARED ${CPP_FILES})
+husky_default_properties(husky)
+
+add_subdirectory(master)

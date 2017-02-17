@@ -15,16 +15,5 @@
 
 include_directories(${PROJECT_SOURCE_DIR} ${HUSKY_EXTERNAL_INCLUDE})
 
-add_library(aggregator-objs OBJECT
-    aggregator.cpp
-    aggregator_object.cpp
-    aggregator_factory.cpp)
-husky_default_properties(aggregator-objs)
-
-# Combine lib-objs
-set(lib-objs $<TARGET_OBJECTS:aggregator-objs>)
-
-# Visible to parent directory
-set(lib-objs ${lib-objs} PARENT_SCOPE)
-
-add_library(husky-lib STATIC ${lib-objs} ${ml-objs})
+file(GLOB_RECURSE LIB_CPP_FILES *.cpp)
+set(LIB_CPP_FILES ${LIB_CPP_FILES} PARENT_SCOPE)

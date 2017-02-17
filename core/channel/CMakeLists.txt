@@ -15,10 +15,5 @@
 
 include_directories(${PROJECT_SOURCE_DIR} ${EXTERNAL_INCLUDE})
 
-add_library(channel-objs OBJECT
-    aggregator_channel.cpp
-    channel_base.cpp
-    channel_destination.cpp
-    channel_store_base.cpp
-    channel_source.cpp)
-husky_default_properties(channel-objs)
+file(GLOB CHANNEL_CPP_FILES *.cpp)
+set(CHANNEL_CPP_FILES ${CHANNEL_CPP_FILES} PARENT_SCOPE)
