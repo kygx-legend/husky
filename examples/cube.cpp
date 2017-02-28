@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
 #include <climits>
 #include <map>
 #include <memory>
 #include <stack>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "boost/algorithm/string.hpp"
@@ -88,24 +90,22 @@ class TreeNode {
 };
 
 class AttrSet {
-public:
+   public:
     AttrSet() = default;
 
     AttrSet(AttrIdx&& key, DimMap&& mapping) : key_(std::move(key)), map_(std::move(mapping)) {}
 
-    bool has(int attr) const{
-        return (std::find(key_.begin(), key_.end(), attr) != key_.end());
-    }
+    bool has(int attr) const { return (std::find(key_.begin(), key_.end(), attr) != key_.end()); }
 
     size_t size() const { return key_.size(); }
 
     const int operator[](int attr) const { return map_.at(attr); }
 
-    const AttrIdx& get_attridx() const{ return key_; }
+    const AttrIdx& get_attridx() const { return key_; }
 
-    const DimMap& get_map() const{ return map_; }
+    const DimMap& get_map() const { return map_; }
 
-private:
+   private:
     AttrIdx key_;
     DimMap map_;
 };
@@ -135,9 +135,9 @@ std::string print_key(const AttrIdx& key) {
     return out;
 }
 
-void measure(const Tuple& key_value, const AttrIdx& group_set, const AttrIdx& select, const AttrSet& key_attributes, const AttrSet& msg_attributes,
-             const int uid_dim, TVIterator begin, TVIterator end, PushCombinedChannel<Pair, Group, PairSumCombiner>& post_ch,
-             Aggregator<int>& num_write) {
+void measure(const Tuple& key_value, const AttrIdx& group_set, const AttrIdx& select, const AttrSet& key_attributes,
+             const AttrSet& msg_attributes, const int uid_dim, TVIterator begin, TVIterator end,
+             PushCombinedChannel<Pair, Group, PairSumCombiner>& post_ch, Aggregator<int>& num_write) {
     int count = end - begin;
     std::sort(begin, end, [uid_dim](const Tuple& a, const Tuple& b) { return a[uid_dim] < b[uid_dim]; });
     int unique = 1;
@@ -209,9 +209,10 @@ void partition(TVIterator begin, TVIterator end, const int dim, std::vector<int>
     }
 }
 
-void BUC(std::shared_ptr<TreeNode> cur_node, TupleVector& table, const Tuple& key_value, const AttrIdx& select, const AttrSet& key_attributes,
-    const AttrSet& msg_attributes, const int uid_dim, const int dim, TVIterator begin, TVIterator end,
-    PushCombinedChannel<Pair, Group, PairSumCombiner>& post_ch, Aggregator<int>& num_write) {
+void BUC(std::shared_ptr<TreeNode> cur_node, TupleVector& table, const Tuple& key_value, const AttrIdx& select,
+         const AttrSet& key_attributes, const AttrSet& msg_attributes, const int uid_dim, const int dim,
+         TVIterator begin, TVIterator end, PushCombinedChannel<Pair, Group, PairSumCombiner>& post_ch,
+         Aggregator<int>& num_write) {
     // Measure current group
     measure(key_value, cur_node->Key(), select, key_attributes, msg_attributes, uid_dim, begin, end, post_ch,
             num_write);
@@ -221,8 +222,8 @@ void BUC(std::shared_ptr<TreeNode> cur_node, TupleVector& table, const Tuple& ke
         // Partition table by next column
         int next_dim = next_partition_dim(cur_node->Key(), child->Key(), msg_attributes.get_map());
         if (next_dim == -1) {
-            throw husky::base::HuskyException("Cannot find next partition dimension from " + print_key(cur_node->Key()) +
-                " to " + print_key(child->Key()));
+            throw husky::base::HuskyException("Cannot find next partition dimension from " +
+                                              print_key(cur_node->Key()) + " to " + print_key(child->Key()));
         }
         std::vector<int> next_partition_result = {};
         partition(begin, end, next_dim, next_partition_result);
@@ -230,13 +231,14 @@ void BUC(std::shared_ptr<TreeNode> cur_node, TupleVector& table, const Tuple& ke
         TVIterator k = begin;
         for (int i = 0; i < next_partition_result.size(); ++i) {
             int count = next_partition_result[i];
-            BUC(child, table, key_value, select, key_attributes, msg_attributes, uid_dim, next_dim, k, k + count, post_ch, num_write);
+            BUC(child, table, key_value, select, key_attributes, msg_attributes, uid_dim, next_dim, k, k + count,
+                post_ch, num_write);
             k += count;
         }
     }
 }
 
-bool is_operator(const char& c) { return (c == '<' or c == '>' or c == '='); }
+bool is_operator(const char& c) { return (c == '<' || c == '>' || c == '='); }
 
 void parse_group_set(const std::string& group_filter, const Tokenizer& schema_tok,
                      std::vector<std::shared_ptr<TreeNode>>& out_roots, std::vector<FilterMap>& out_filters) {
@@ -355,7 +357,7 @@ void parse_group_set(const std::string& group_filter, const Tokenizer& schema_to
                     }
                 }
             }
-            if (pos[0] == 0 or pos[1] == 0) {
+            if (pos[0] == 0 || pos[1] == 0) {
                 throw husky::base::HuskyException("Invalid syntax in WHERE");
             }
             std::string attr = where_str.substr(0, pos[0]);
@@ -374,21 +376,21 @@ void parse_group_set(const std::string& group_filter, const Tokenizer& schema_to
 }
 
 bool pass_filter(const std::string& value, const Filter& filter) {
-    if (boost::iequals(filter.second, std::string("null"))) 
+    if (boost::iequals(filter.second, std::string("null")))
         return true;  // Always return true if compare against null.
                       // Consistent to SQL
-    
-    if(filter.first == "<>")
+
+    if (filter.first == "<>")
         return value != filter.second;
-    if(filter.first == ">")
+    if (filter.first == ">")
         return value > filter.second;
-    if(filter.first == "<")
+    if (filter.first == "<")
         return value < filter.second;
-    if(filter.first == ">=")
+    if (filter.first == ">=")
         return value >= filter.second;
-    if(filter.first == "<=")
+    if (filter.first == "<=")
         return value <= filter.second;
-    if(filter.first == "=")
+    if (filter.first == "=")
         return value == filter.second;
 }
 
@@ -444,7 +446,6 @@ void cube_buc() {
         } else {
             throw husky::base::HuskyException("Attribute is not in the schema");
         }
-        
     }
 
     std::vector<std::shared_ptr<TreeNode>> root_vec;
@@ -498,10 +499,10 @@ void cube_buc() {
     husky::io::ORCInputFormat infmt;
     infmt.set_input(husky::Context::get_param("input"));
 
-    auto& buc_list = husky::ObjListFactory::create_objlist<Group>("buc_list");
-    auto& buc_ch = husky::ChannelFactory::create_push_channel<Tuple>(infmt, buc_list);
-    auto& post_list = husky::ObjListFactory::create_objlist<Group>("post_list");
-    auto& post_ch = husky::ChannelFactory::create_push_combined_channel<Pair, PairSumCombiner>(buc_list, post_list);
+    auto& buc_list = husky::ObjListStore::create_objlist<Group>();
+    auto& buc_ch = husky::ChannelStore::create_push_channel<Tuple>(infmt, buc_list);
+    auto& post_list = husky::ObjListStore::create_objlist<Group>();
+    auto& post_ch = husky::ChannelStore::create_push_combined_channel<Pair, PairSumCombiner>(buc_list, post_list);
 
     Aggregator<int> num_write;  // track number of records written to hdfs
     Aggregator<int> num_tuple;  // track number of tuples read from db
@@ -525,7 +526,7 @@ void cube_buc() {
             std::string fuid;
             int j = 0;
             for (auto& col : tok) {
-                if (filter_map.find(j) != filter_map.end() and !pass_filter(col, filter_map[j])) {
+                if (filter_map.find(j) != filter_map.end() && !pass_filter(col, filter_map[j])) {
                     to_send[i] = false;
                     break;
                 }
@@ -578,8 +579,8 @@ void cube_buc() {
         auto& msg_attributes = msg_attr_vec[filter_idx];
         int uid_dim = msg_attributes.size();
 
-        BUC(buc_root, table, key_value, select, key_attributes, msg_attributes, uid_dim, 0,
-            table.begin(), table.end(), post_ch, num_write);
+        BUC(buc_root, table, key_value, select, key_attributes, msg_attributes, uid_dim, 0, table.begin(), table.end(),
+            post_ch, num_write);
     });
 
     if (gpart_factor > 1) {
@@ -587,7 +588,7 @@ void cube_buc() {
             husky::base::log_msg("Finished BUC stage.\nStart post process...");
         }
 
-        husky::ObjListFactory::drop_objlist("buc_list");
+        husky::ObjListStore::drop_objlist(buc_list.get_id());
 
         husky::list_execute(post_list, {&post_ch}, {&agg_ch}, [&post_ch, &num_write](Group& g) {
             auto& msg = post_ch.get(g);

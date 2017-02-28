@@ -17,9 +17,12 @@
 #include "io/input/orc_file_splitter.hpp"
 
 #include <string>
+#include <vector>
 
 #include "boost/utility/string_ref.hpp"
+#ifdef WITH_HDFS
 #include "hdfs/hdfs.h"
+#endif
 #include "orc/ColumnPrinter.hh"
 #include "orc/OrcFile.hh"
 #include "orc/orc-config.hh"
@@ -32,6 +35,7 @@
 #include "io/input/orc_hdfs_inputstream.hpp"
 
 namespace orc {
+
 class SQLColumnPrinter : public ColumnPrinter {
    public:
     SQLColumnPrinter(std::string& buffer, const Type& type) : ColumnPrinter(buffer) {
@@ -81,9 +85,9 @@ class SQLColumnPrinter : public ColumnPrinter {
     }
 
     std::vector<ColumnPrinter*> fieldPrinter;
-    // std::vector<std::string> fieldNames;
 };
-}  // orc
+
+}  // namespace orc
 
 namespace husky {
 namespace io {
@@ -116,7 +120,7 @@ void ORCFileSplitter::load(std::string url) {
 boost::string_ref ORCFileSplitter::fetch_batch() {
     BinStream question;
     question << url_;
-    BinStream answer = husky::Context::get_coordinator().ask_master(question, husky::TYPE_ORC_BLK_REQ);
+    BinStream answer = husky::Context::get_coordinator()->ask_master(question, husky::TYPE_ORC_BLK_REQ);
     std::string fn;
     size_t offset;
     answer >> fn;
@@ -133,7 +137,7 @@ boost::string_ref ORCFileSplitter::fetch_batch() {
 
 boost::string_ref ORCFileSplitter::read_by_batch(size_t offset) {
     buffer_.clear();
-    try {    
+    try {
         std::string line = "";
         reader_->seekToRow(offset);
         std::unique_ptr<orc::ColumnPrinter> printer(new SQLColumnPrinter(line, reader_->getSelectedType()));
@@ -141,14 +145,12 @@ boost::string_ref ORCFileSplitter::read_by_batch(size_t offset) {
 
         if (reader_->next(*batch)) {
             printer->reset(*batch);
-            unsigned long i;
-            for (i = 0; i < batch->numElements; ++i) {
+            for (unsigned int i = 0; i < batch->numElements; ++i) {
                 line.clear();
                 printer->printRow(i);
                 line += "\n";
                 buffer_ += line;
             }
-            // husky::base::log_msg(std::to_string(batch->numElements));
         }
     } catch (const std::exception& e) {
         husky::base::log_msg(e.what());

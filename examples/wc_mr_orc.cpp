@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <sstream>
 #include <string>
 #include <vector>
-#include <sstream>
 
 #include "boost/tokenizer.hpp"
 
@@ -39,19 +39,10 @@ void wc() {
     infmt.set_input(husky::Context::get_param("input"));
     husky::lib::Aggregator<int> num_tuple(0, [](int& a, const int& b){ a += b; });
 
-    // auto& word_list = husky::ObjListFactory::create_objlist<Word>();
-    // auto& ch = husky::ChannelFactory::create_push_combined_channel<int, husky::SumCombiner<int>>(infmt, word_list);
     auto parse_wc = [&](boost::string_ref& chunk) {
         if (chunk.size() == 0)
             return;
-        // husky::base::log_msg(chunk.to_string());
         num_tuple.update(1);
-    //     // boost::char_separator<char> sep("{}");
-    //     // boost::tokenizer<boost::char_separator<char>> tok(chunk, sep);
-    //     // std::ostringstream os;
-    //     // for (auto& w : tok) {
-    //     //     os<<w;
-    //     // }
     };
     husky::load(infmt, parse_wc);
     husky::lib::AggregatorFactory::sync();

@@ -18,6 +18,7 @@
 #include <map>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "orc/OrcFile.hh"
 

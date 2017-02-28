@@ -16,8 +16,8 @@
 
 #ifdef WITH_ORC
 
-#include <string>
 #include <mutex>
+#include <string>
 
 #include "hdfs/hdfs.h"
 #include "orc/OrcFile.hh"
@@ -34,7 +34,7 @@ using husky::base::HuskyException;
 const int kOrcRowBatchSize = 5000;
 
 class HDFSFileInputStream final : public orc::InputStream {
-  public:
+   public:
     HDFSFileInputStream(hdfsFS hdfs_fs, const std::string& file) {
         hdfs_fs_ = hdfs_fs;
         file_name_ = file;
@@ -65,7 +65,7 @@ class HDFSFileInputStream final : public orc::InputStream {
             start += nbytes;
             remain -= nbytes;
         }
-        
+
         if (start == -1)
             throw HuskyException("Bad read of " + file_name_);
         if (static_cast<uint64_t>(start) != length)
@@ -74,7 +74,7 @@ class HDFSFileInputStream final : public orc::InputStream {
 
     const std::string& getName() const override { return file_name_; }
 
-  private:
+   private:
     std::string file_name_;
     hdfsFile hdfs_file_;
     hdfsFS hdfs_fs_;

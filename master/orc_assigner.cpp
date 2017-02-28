@@ -20,8 +20,8 @@
 #include <string>
 #include <utility>
 
-#include "orc/OrcFile.hh"
 #include "boost/filesystem.hpp"
+#include "orc/OrcFile.hh"
 
 #include "base/log.hpp"
 #include "core/constants.hpp"
@@ -65,7 +65,7 @@ void ORCBlockAssigner::master_main_handler() {
 
 void ORCBlockAssigner::master_setup_handler() {
     init_hdfs(Context::get_param("hdfs_namenode"), Context::get_param("hdfs_namenode_port"));
-    num_workers_alive = Context::get_worker_info()->get_num_workers();
+    num_workers_alive = Context::get_num_workers();
 }
 
 void ORCBlockAssigner::init_hdfs(const std::string& node, const std::string& port) {
@@ -136,7 +136,7 @@ std::pair<std::string, size_t> ORCBlockAssigner::answer(std::string& url) {
         }
         return {"", 0};
     }
-    
+
     auto& file = files.back();
     std::pair<std::string, size_t> ret = {file.filename, file.offset};
     file.offset += io::kOrcRowBatchSize;
@@ -149,4 +149,5 @@ std::pair<std::string, size_t> ORCBlockAssigner::answer(std::string& url) {
 }
 
 }  // namespace husky
+
 #endif

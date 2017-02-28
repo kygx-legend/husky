@@ -46,9 +46,7 @@ class ORCInputFormat : public InputFormatBase {
     int r = 0;
     boost::string_ref buffer_;
     ORCFileSplitter splitter_;
-
 };
 
 }  // namespace io
 }  // namespace husky
-

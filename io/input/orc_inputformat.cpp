@@ -15,13 +15,13 @@
 
 #include "io/input/orc_inputformat.hpp"
 
-#include <string>
 #include <sstream>
+#include <string>
 
 #include "boost/utility/string_ref.hpp"
 
-#include "io/input/inputformat_helper.hpp"
 #include "base/log.hpp"
+#include "io/input/inputformat_helper.hpp"
 
 namespace husky {
 namespace io {
@@ -33,7 +33,6 @@ enum ORCInputFormatSetUp {
 };
 
 ORCInputFormat::ORCInputFormat() { is_setup_ = ORCInputFormatSetUp::NotSetUp; }
-
 
 bool ORCInputFormat::is_setup() const { return !(is_setup_ ^ ORCInputFormatSetUp::AllSetUp); }
 
@@ -50,9 +49,9 @@ void ORCInputFormat::set_input(const std::string& url) {
 }
 
 // buffer_ got from the orc_splitter must be '\n' seperated lines
-// this saves us a lot of block handling 
+// this saves us a lot of block handling
 bool ORCInputFormat::next(boost::string_ref& ref) {
-    if (buffer_.empty() || r == buffer_.size() - 1){
+    if (buffer_.empty() || r == buffer_.size() - 1) {
         clear_buffer();
         bool success = fetch_new_batch();
         if (success == false) {

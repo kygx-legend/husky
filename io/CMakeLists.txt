@@ -15,16 +15,6 @@
 
 include_directories(${PROJECT_SOURCE_DIR} ${HUSKY_EXTERNAL_INCLUDE})
 
-if(ORC_FOUND)
-    include_directories(${ORC_INCLUDE_DIR})
-    add_definitions(-DWITH_ORC)
-endif(ORC_FOUND)
-
-if(ORC_FOUND)
-    include_directories(${ORC_INCLUDE_DIR})
-    add_definitions(-DWITH_ORC)
-endif(ORC_FOUND)
-
 add_subdirectory(input)
 add_subdirectory(output)
 

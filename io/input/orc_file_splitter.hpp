@@ -49,7 +49,7 @@ class ORCFileSplitter {
     hdfsFS fs_;
 };
 
-}  // namespace husky
 }  // namespace io
+}  // namespace husky
 
 #endif
