@@ -47,7 +47,7 @@ void wc() {
     husky::load(infmt, parse_wc);
     husky::lib::AggregatorFactory::sync();
     if (husky::Context::get_global_tid() == 0) {
-        husky::base::log_msg("Total number of tuples: " + std::to_string(num_tuple.get_value()));
+        husky::LOG_I << "Total number of tuples: " << num_tuple.get_value();
     }
 }
 

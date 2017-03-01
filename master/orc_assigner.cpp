@@ -60,7 +60,7 @@ void ORCBlockAssigner::master_main_handler() {
     zmq_sendmore_dummy(resp_socket.get());
     zmq_send_binstream(resp_socket.get(), stream);
 
-    base::log_msg(" => " + ret.first + "@" + std::to_string(ret.second));
+    LOG_I << " => " << ret.first << "@" << ret.second;
 }
 
 void ORCBlockAssigner::master_setup_handler() {
@@ -82,7 +82,7 @@ void ORCBlockAssigner::init_hdfs(const std::string& node, const std::string& por
     if (fs_) {
         return;
     }
-    base::log_msg("Failed to connect to HDFS " + node + ":" + port);
+    LOG_I << "Failed to connect to HDFS " << node << ":" << port;
 }
 
 void ORCBlockAssigner::browse_hdfs(const std::string& url) {
@@ -104,11 +104,10 @@ void ORCBlockAssigner::browse_hdfs(const std::string& url) {
             files.push_back(OrcFileDesc{std::string(file_info[i].mName) + '\0', num_rows, 0});
             total += num_rows;
         }
-        base::log_msg("Total num of rows: " + std::to_string(total));
+        LOG_I << "Total num of rows: " << total;
         hdfsFreeFileInfo(file_info, num_files);
     } catch (const std::exception& ex) {
-        base::log_msg("Exception cought: ");
-        base::log_msg(ex.what());
+        LOG_I << "Exception cought: " << ex.what();
     }
 }
 
