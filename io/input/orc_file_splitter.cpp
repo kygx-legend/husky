@@ -153,7 +153,7 @@ boost::string_ref ORCFileSplitter::read_by_batch(size_t offset) {
             }
         }
     } catch (const std::exception& e) {
-        husky::base::log_msg(e.what());
+        LOG_I << e.what();
     }
     return boost::string_ref(buffer_);
 }

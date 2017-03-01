@@ -283,7 +283,7 @@ void parse_group_set(const std::string& group_filter, const Tokenizer& schema_to
         }
     }
     if (husky::Context::get_global_tid() == 0) {
-        husky::base::log_msg("Min level: " + std::to_string(min_lv) + "\tMax level: " + std::to_string(max_lv));
+        husky::LOG_I << "Min level: " << min_lv << "\tMax level: " << max_lv;
     }
 
     // Build group set lattice
@@ -306,7 +306,7 @@ void parse_group_set(const std::string& group_filter, const Tokenizer& schema_to
         }
     }
     if (husky::Context::get_global_tid() == 0) {
-        husky::base::log_msg("Finished constructing lattice.");
+        husky::LOG_I << "Finished constructing lattice.";
     }
 
     // Construct BUC processing tree
@@ -332,7 +332,7 @@ void parse_group_set(const std::string& group_filter, const Tokenizer& schema_to
     }
     out_roots.push_back(buc_root);
     if (husky::Context::get_global_tid() == 0) {
-        husky::base::log_msg("Finished constructing buc processing tree.");
+        husky::LOG_I << "Finished constructing buc processing tree.";
     }
 
     /**
@@ -395,7 +395,7 @@ bool pass_filter(const std::string& value, const Filter& filter) {
 }
 
 void print_buc_tree(const std::shared_ptr<TreeNode>& root) {
-    husky::base::log_msg(print_key(root->Key()));
+    husky::LOG_I << print_key(root->Key());
     for (auto& child : root->Children()) {
         print_buc_tree(child);
     }
@@ -403,7 +403,7 @@ void print_buc_tree(const std::shared_ptr<TreeNode>& root) {
 
 void print_filter_map(const FilterMap& fmap) {
     for (auto& kv : fmap) {
-        husky::base::log_msg(std::to_string(kv.first) + " " + kv.second.first + " " + kv.second.second);
+        husky::LOG_I << kv.first << " " << kv.second.first << " " << kv.second.second;
     }
 }
 
@@ -555,7 +555,7 @@ void cube_buc() {
     husky::load(infmt, parser);
     husky::lib::AggregatorFactory::sync();
     if (husky::Context::get_global_tid() == 0) {
-        husky::base::log_msg("Total num of tuple: " + std::to_string(num_tuple.get_value()));
+        husky::LOG_I << "Total num of tuple: " << num_tuple.get_value();
     }
 
     // Receive
@@ -585,7 +585,7 @@ void cube_buc() {
 
     if (gpart_factor > 1) {
         if (husky::Context::get_global_tid() == 0) {
-            husky::base::log_msg("Finished BUC stage.\nStart post process...");
+            husky::LOG_I << "Finished BUC stage.\nStart post process...";
         }
 
         husky::ObjListStore::drop_objlist(buc_list.get_id());
@@ -604,7 +604,7 @@ void cube_buc() {
 
     int total_num_write = num_write.get_value();
     if (husky::Context::get_global_tid() == 0) {
-        husky::base::log_msg("Total number of rows written to HDFS: " + std::to_string(total_num_write));
+        husky::LOG_I << "Total number of rows written to HDFS: " << total_num_write;
     }
 }
 
