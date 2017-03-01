@@ -19,8 +19,8 @@
 #include "boost/tokenizer.hpp"
 
 #include "core/engine.hpp"
-#include "io/input/orc_inputformat.hpp"
 #include "lib/aggregator_factory.hpp"
+#include "io/input/inputformat_store.hpp"
 
 class Word {
    public:
@@ -35,7 +35,7 @@ class Word {
 };
 
 void wc() {
-    husky::io::ORCInputFormat infmt;
+    auto& infmt = husky::io::InputFormatStore::create_orc_inputformat();
     infmt.set_input(husky::Context::get_param("input"));
     husky::lib::Aggregator<int> num_tuple(0, [](int& a, const int& b){ a += b; });
 

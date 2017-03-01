@@ -27,7 +27,7 @@
 
 #include "core/engine.hpp"
 #include "io/hdfs_manager.hpp"
-#include "io/input/orc_inputformat.hpp"
+#include "io/input/inputformat_store.hpp"
 #include "lib/aggregator_factory.hpp"
 
 typedef boost::tokenizer<boost::char_separator<char>> Tokenizer;
@@ -496,7 +496,7 @@ void cube_buc() {
     }
 
     // Load input and emit key\tpid\ti -> uid
-    husky::io::ORCInputFormat infmt;
+    auto& infmt = husky::io::InputFormatStore::create_orc_inputformat();
     infmt.set_input(husky::Context::get_param("input"));
 
     auto& buc_list = husky::ObjListStore::create_objlist<Group>();
