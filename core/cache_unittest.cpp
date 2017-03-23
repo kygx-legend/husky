@@ -1,5 +1,6 @@
 #include "core/cache.hpp"
 
+#include "boost/optional.hpp"
 #include "gtest/gtest.h"
 
 namespace husky {
@@ -27,6 +28,7 @@ class TestFIFOCache : public testing::Test {
 TEST_F(TestLRUCache, Basic) {
     LRUCache<int, int> cache(5);
 
+    EXPECT_EQ(cache.get_size(), 0);
     EXPECT_EQ(cache.poll(), boost::none);
     EXPECT_EQ(cache.del(), boost::none);
     cache.put(1, 11);
@@ -34,71 +36,52 @@ TEST_F(TestLRUCache, Basic) {
     cache.put(3, 13);
     cache.put(4, 14);
     cache.put(5, 15);
+    cache.put(6, 16);
+    cache.put(7, 17);
+    cache.put(8, 18);
+    cache.put(9, 19);
 
     auto kv_pair = *cache.poll();
-    EXPECT_EQ(kv_pair.first, 1);
-    EXPECT_EQ(kv_pair.second, 11);
-
-    kv_pair = *cache.del();
-    EXPECT_EQ(kv_pair.first, 1);
-    EXPECT_EQ(kv_pair.second, 11);
-
-    cache.put(2, 16);
-    kv_pair = *cache.poll();
-    EXPECT_EQ(kv_pair.first, 3);
-    EXPECT_EQ(kv_pair.second, 13);
-
-    kv_pair = *cache.del();
-    EXPECT_EQ(kv_pair.first, 3);
-    EXPECT_EQ(kv_pair.second, 13);
-
-    cache.put(4, 17);
-    cache.put(5, 18);
-
-    kv_pair = *cache.poll();
-    EXPECT_EQ(kv_pair.first, 2);
-    EXPECT_EQ(kv_pair.second, 16);
-
-    kv_pair = *cache.del();
-    EXPECT_EQ(kv_pair.first, 2);
-    EXPECT_EQ(kv_pair.second, 16);
-
-    kv_pair = *cache.poll();
-    EXPECT_EQ(kv_pair.first, 4);
-    EXPECT_EQ(kv_pair.second, 17);
-
-    kv_pair = *cache.del();
-    EXPECT_EQ(kv_pair.first, 4);
-    EXPECT_EQ(kv_pair.second, 17);
-
-    kv_pair = *cache.poll();
     EXPECT_EQ(kv_pair.first, 5);
-    EXPECT_EQ(kv_pair.second, 18);
+    EXPECT_EQ(kv_pair.second, 15);
 
     kv_pair = *cache.del();
     EXPECT_EQ(kv_pair.first, 5);
-    EXPECT_EQ(kv_pair.second, 18);
-
-    EXPECT_EQ(cache.get_size(), 0);
-
-    cache.put(1, 100);
-    cache.put(2, 200);
-    cache.put(3, 300);
-    cache.put(4, 400);
-    cache.put(5, 500);
-    EXPECT_EQ(cache.get_size(), 5);
-
-    cache.put(6, 600);
-    EXPECT_EQ(cache.get_size(), 5);
-    cache.put(7, 700);
-    cache.put(8, 800);
-    cache.put(9, 900);
-    cache.put(10, 1000);
-    EXPECT_EQ(cache.get_size(), 5);
+    EXPECT_EQ(kv_pair.second, 15);
 
     kv_pair = *cache.poll();
     EXPECT_EQ(kv_pair.first, 6);
-    EXPECT_EQ(kv_pair.second, 600);
+    EXPECT_EQ(kv_pair.second, 16);
+
+    kv_pair = *cache.del();
+    EXPECT_EQ(kv_pair.first, 6);
+    EXPECT_EQ(kv_pair.second, 16);
+
+    kv_pair = *cache.poll();
+    EXPECT_EQ(kv_pair.first, 7);
+    EXPECT_EQ(kv_pair.second, 17);
+
+    kv_pair = *cache.del();
+    EXPECT_EQ(kv_pair.first, 7);
+    EXPECT_EQ(kv_pair.second, 17);
+
+    kv_pair = *cache.poll();
+    EXPECT_EQ(kv_pair.first, 8);
+    EXPECT_EQ(kv_pair.second, 18);
+
+    kv_pair = *cache.del();
+    EXPECT_EQ(kv_pair.first, 8);
+    EXPECT_EQ(kv_pair.second, 18);
+
+    kv_pair = *cache.poll();
+    EXPECT_EQ(kv_pair.first, 9);
+    EXPECT_EQ(kv_pair.second, 19);
+
+    kv_pair = *cache.del();
+    EXPECT_EQ(kv_pair.first, 9);
+    EXPECT_EQ(kv_pair.second, 19);
+
+    EXPECT_EQ(cache.get_size(), 0);
 }
 
 TEST_F(TestFIFOCache, Basic) {
@@ -106,6 +89,10 @@ TEST_F(TestFIFOCache, Basic) {
 
     EXPECT_EQ(cache.poll(), boost::none);
     EXPECT_EQ(cache.del(), boost::none);
+    cache.put(9, 19);
+    cache.put(8, 18);
+    cache.put(7, 17);
+    cache.put(6, 16);
     cache.put(1, 11);
     cache.put(2, 12);
     cache.put(3, 13);
@@ -162,27 +149,6 @@ TEST_F(TestFIFOCache, Basic) {
     EXPECT_EQ(cache.get_size(), 0);
     EXPECT_EQ(cache.poll(), boost::none);
     EXPECT_EQ(cache.del(), boost::none);
-
-    cache.put(1, 11);
-    cache.put(2, 12);
-    cache.put(3, 13);
-    cache.put(4, 14);
-    cache.put(5, 15);
-
-    EXPECT_EQ(cache.get_size(), 5);
-
-    cache.put(6, 600);
-    cache.put(7, 700);
-    cache.put(8, 800);
-    cache.put(9, 900);
-    cache.put(10, 1000);
-
-    EXPECT_EQ(cache.get_size(), 5);
-    cache.put(6, 600);
-
-    kv_pair = *cache.poll();
-    EXPECT_EQ(kv_pair.first, 6);
-    EXPECT_EQ(kv_pair.second, 600);
 }
 
 }  // namespace
