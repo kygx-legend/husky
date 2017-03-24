@@ -23,7 +23,6 @@
 #include "boost/program_options.hpp"
 
 #include "base/log.hpp"
-#include "base/memory.hpp"
 #include "core/network.hpp"
 
 namespace husky {
@@ -84,10 +83,7 @@ bool Config::init_with_args(int ac, char** av, const std::vector<std::string>& c
             customized_options.add_options()(arg.c_str(), po::value<std::string>(), "");
 
     po::options_description cmdline_options;
-    cmdline_options.add(generic_options)
-        .add(config_file_options)
-        .add(required_options)
-        .add(worker_info_options);
+    cmdline_options.add(generic_options).add(config_file_options).add(required_options).add(worker_info_options);
     po::options_description config_options;
     config_options.add(required_options).add(worker_info_config);
     if (!customized_options.options().empty()) {
