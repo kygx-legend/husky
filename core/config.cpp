@@ -78,14 +78,6 @@ bool Config::init_with_args(int ac, char** av, const std::vector<std::string>& c
                                      "Worker information.\nFormat is '%worker_hostname:%thread_number'.\nUse "
                                      "colon ':' as separator.");
 
-    po::options_description optional_options("Optional options");
-    optional_options.add_options()("maximum_thread_memory", po::value<std::string>()->default_value(""),
-                                   "Maximum memory for a thread")(
-        "maximum_process_memory",
-        po::value<std::string>()->default_value(std::to_string(base::Memory::total_phys_mem())),
-        "Maximum memory for a process")("page_size", po::value<std::string>()->default_value("4194304"),
-                                        "Size of a page");
-
     po::options_description customized_options("Customized options");
     if (!customized.empty())
         for (auto& arg : customized)
@@ -95,10 +87,9 @@ bool Config::init_with_args(int ac, char** av, const std::vector<std::string>& c
     cmdline_options.add(generic_options)
         .add(config_file_options)
         .add(required_options)
-        .add(worker_info_options)
-        .add(optional_options);
+        .add(worker_info_options);
     po::options_description config_options;
-    config_options.add(required_options).add(worker_info_config).add(optional_options);
+    config_options.add(required_options).add(worker_info_config);
     if (!customized_options.options().empty()) {
         cmdline_options.add(customized_options);
         config_options.add(customized_options);
