@@ -198,23 +198,6 @@ bool Config::init_with_args(int ac, char** av, const std::vector<std::string>& c
         LOG_E << "arg worker.info is needed";
     }
 
-    // optional options
-    if (vm.count("maximum_thread_memory")) {
-        set_param("maximum_thread_memory", vm["maximum_thread_memory"].as<std::string>());
-    } else {
-        std::string str_max_proc_mem = vm["maximum_process_memory"].as<std::string>();
-        std::stringstream str_stream(str_max_proc_mem);
-        int64_t max_proc_mem;
-        str_stream >> max_proc_mem;
-        int num_local_threads = 1;
-        if (worker_info != nullptr) {
-            num_local_threads = worker_info->get_num_local_workers();
-        }
-        set_param("maximum_thread_memory", std::to_string(max_proc_mem / num_local_threads));
-    }
-    set_param("maximum_process_memory", vm["maximum_process_memory"].as<std::string>());
-    set_param("page_size", vm["page_size"].as<std::string>());
-
     if (!customized.empty()) {
         for (auto& arg : customized)
             if (vm.count(arg.c_str())) {

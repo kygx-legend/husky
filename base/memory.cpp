@@ -1,4 +1,4 @@
-// Copyright 2016 Husky Team
+// Copyright 2017 Husky Team
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,9 +14,27 @@
 
 #include "base/memory.hpp"
 
+#include <sys/sysinfo.h>
+
 namespace husky {
 namespace base {
 
 struct sysinfo Memory::mem_info;
+
+int64_t Memory::total_phys_mem() {
+    sysinfo(&mem_info);
+    int64_t total_phys_mem = mem_info.totalram;
+    total_phys_mem *= mem_info.mem_unit;
+    return total_phys_mem;
 }
+
+int64_t Memory::total_virtual_mem() {
+    sysinfo(&mem_info);
+    int64_t total_vir_mem = mem_info.totalram;
+    total_vir_mem += mem_info.totalswap;
+    total_vir_mem *= mem_info.mem_unit;
+    return total_vir_mem;
 }
+
+}  // namespace base
+}  // namespace husky
