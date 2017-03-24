@@ -21,8 +21,8 @@ namespace husky {
 namespace base {
 class Memory {
    public:
-    static int64_t total_phys_mem();
-    static int64_t total_virtual_mem();
+    static size_t total_phys_mem();
+    static size_t total_virtual_mem();
 
    private:
     static struct sysinfo mem_info;

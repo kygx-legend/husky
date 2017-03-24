@@ -21,16 +21,16 @@ namespace base {
 
 struct sysinfo Memory::mem_info;
 
-int64_t Memory::total_phys_mem() {
+size_t Memory::total_phys_mem() {
     sysinfo(&mem_info);
-    int64_t total_phys_mem = mem_info.totalram;
+    size_t total_phys_mem = mem_info.totalram;
     total_phys_mem *= mem_info.mem_unit;
     return total_phys_mem;
 }
 
-int64_t Memory::total_virtual_mem() {
+size_t Memory::total_virtual_mem() {
     sysinfo(&mem_info);
-    int64_t total_vir_mem = mem_info.totalram;
+    size_t total_vir_mem = mem_info.totalram;
     total_vir_mem += mem_info.totalswap;
     total_vir_mem *= mem_info.mem_unit;
     return total_vir_mem;
