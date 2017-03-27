@@ -15,19 +15,12 @@ class TestPage : public testing::Test {
     ~TestPage() {}
 
    protected:
-    void SetUp() {
-        Config config;
-        int64_t max_thread_mem = 1024 * 1024 * 32;
-        config.set_param("maximum_thread_memory", std::to_string(max_thread_mem));
-        config.set_param("page_size", "4194304");
-        Context::set_config(std::move(config));
-        Context::set_local_tid(0);
-    }
+    void SetUp() {}
     void TearDown() {}
 };
 
 TEST_F(TestPage, Functional) {
-    Page p1(1);
+    Page p1(1, 0, 4194304);
     p1.swap_in_memory();
     EXPECT_EQ(p1.get_bin().size(), 0);
     EXPECT_EQ(p1.all_memory(), 4194304);

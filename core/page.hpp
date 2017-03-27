@@ -26,6 +26,8 @@
 
 namespace husky {
 
+// ObjListBase is located in the file core/objlist.hpp.
+// Forward declaration is used to prevent cyclic header file inclusion.
 class ObjListBase;
 
 using base::DiskStore;
@@ -35,12 +37,8 @@ class Page {
    public:
     using KeyT = size_t;
 
-    explicit Page(KeyT id) : id_(id), tid_(Context::get_local_tid()) {
+    explicit Page(KeyT id, size_t tid, size_t page_size) : id_(id), tid_(tid), all_bytes_(page_size) {
         this->file_name_ = "/var/tmp/page-" + std::to_string(tid_) + "-" + std::to_string(id_);
-        std::string page_size = Context::get_param("page_size");
-        std::stringstream str_stream;
-        str_stream.str(page_size);
-        str_stream >> this->all_bytes_;
         this->in_memory_ = false;
         this->bin_in_memory_ = false;
     }
@@ -146,7 +144,7 @@ class Page {
     BinStream bs_;
     bool in_memory_;
     bool bin_in_memory_;
-    int64_t all_bytes_;
+    size_t all_bytes_;
 
    private:
     size_t id_;
