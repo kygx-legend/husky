@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "base/disk_store.hpp"
+#include "base/log.hpp"
 #include "base/serialization.hpp"
 #include "core/context.hpp"
 

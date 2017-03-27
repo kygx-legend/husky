@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "page.hpp"
+#include "core/page.hpp"
 
 #include <string>
 
-#include "objlist.hpp"
+#include "base/log.hpp"
+#include "core/objlist.hpp"
 
 namespace husky {
 
