@@ -310,6 +310,10 @@ class ObjList : public ObjListBase {
         return ret;
     }
 
+    virtual void clear_page_from_memory(Page* page) {
+
+    }
+
    protected:
     ObjListData<ObjT> objlist_data_;
     size_t sorted_size_ = 0;
