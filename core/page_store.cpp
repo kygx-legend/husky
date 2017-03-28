@@ -21,11 +21,11 @@
 
 namespace husky {
 
-thread_local PageMap* PageStore::page_map_ = nullptr;
-thread_local PageSet* PageStore::page_set_ = nullptr;
+thread_local PageMap* PageStore::s_page_map_ = nullptr;
+thread_local PageSet* PageStore::s_page_set_ = nullptr;
 thread_local size_t PageStore::s_counter = 0;
-thread_local size_t PageStore::tid_ = 0;
-size_t PageStore::page_size_ = 0;
+// 4MB
+const size_t PageStore::k_page_size_ = 4 * 1024 * 1024;
 
 // set finalize_all_objlists priority to Level1, the higher the level, the higher the priority
 static thread_local base::RegSessionThreadFinalizer finalize_all_objlists(base::SessionLocalPriority::Level1, []() {
@@ -34,45 +34,39 @@ static thread_local base::RegSessionThreadFinalizer finalize_all_objlists(base::
 });
 
 void PageStore::drop_all_pages() {
-    if (page_map_ == nullptr)
+    if (s_page_map_ == nullptr)
         return;
-    for (auto& page_pair : (*page_map_)) {
+    for (auto& page_pair : (*s_page_map_)) {
         page_pair.second->finalize();
         delete page_pair.second;
     }
-    page_map_->clear();
-    page_set_->clear();
+    s_page_map_->clear();
+    s_page_set_->clear();
 }
 
 void PageStore::init_page_map() {
-    if (page_map_ == nullptr)
-        page_map_ = new PageMap();
+    if (s_page_map_ == nullptr)
+        s_page_map_ = new PageMap();
 
-    if (page_set_ == nullptr)
-        page_set_ = new PageSet();
-
-    tid_ = Context::get_local_tid();
-    std::stringstream str_stream(Context::get_param("page_size"));
-    str_stream >> page_size_;
+    if (s_page_set_ == nullptr)
+        s_page_set_ = new PageSet();
 }
 
 void PageStore::free_page_map() {
-    if (page_map_ != nullptr)
-        delete page_map_;
-    page_map_ = nullptr;
+    if (s_page_map_ != nullptr)
+        delete s_page_map_;
+    s_page_map_ = nullptr;
 
-    if (page_set_ != nullptr)
-        delete page_set_;
-    page_set_ = nullptr;
+    if (s_page_set_ != nullptr)
+        delete s_page_set_;
+    s_page_set_ = nullptr;
 
     s_counter = 0;
-    tid_ = -1;
-    page_size_ = -1;
 }
 
 PageMap& PageStore::get_page_map() {
     init_page_map();
-    return *page_map_;
+    return *s_page_map_;
 }
 
 }  // namespace husky

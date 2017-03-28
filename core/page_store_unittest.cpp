@@ -2,8 +2,8 @@
 
 #include <string>
 
-#include "gtest/gtest.h"
 #include "core/page.hpp"
+#include "gtest/gtest.h"
 
 namespace husky {
 namespace {
@@ -39,7 +39,7 @@ TEST_F(TestPageStore, Functional) {
 
     auto p3 = PageStore::create_page();
     EXPECT_EQ(p3->get_key(), 0);
-    EXPECT_EQ(p3,p1);
+    EXPECT_EQ(p3, p1);
     auto p4 = PageStore::create_page();
     EXPECT_EQ(p4->get_key(), 2);
 }

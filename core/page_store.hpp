@@ -31,13 +31,13 @@ class PageStore {
     static Page* create_page() {
         PageMap& page_map = get_page_map();
         Page* page;
-        if (page_set_->size() != 0) {
-            auto it = page_set_->begin();
+        if (s_page_set_->size() != 0) {
+            auto it = s_page_set_->begin();
             page = *it;
-            page_set_->erase(it);
+            s_page_set_->erase(it);
             return page;
         }
-        page = new Page(s_counter, tid_, page_size_);
+        page = new Page(s_counter, k_page_size_);
         s_counter++;
         page_map.insert({page->get_key(), page});
         DLOG_I << "page store has " << page_map.size() << " pages";
@@ -48,10 +48,10 @@ class PageStore {
         PageMap& page_map = get_page_map();
         if (page_map.find(page->get_key()) == page_map.end())
             throw base::HuskyException("The page to be released is not created by this page store");
-        if (page_set_->find(page) != page_set_->end())
+        if (s_page_set_->find(page) != s_page_set_->end())
             return false;
         page->set_owner(nullptr);
-        page_set_->insert(page);
+        s_page_set_->insert(page);
         return true;
     }
 
@@ -64,11 +64,10 @@ class PageStore {
     static PageMap& get_page_map();
 
    protected:
-    static thread_local PageSet* page_set_;
-    static thread_local PageMap* page_map_;
+    static thread_local PageSet* s_page_set_;
+    static thread_local PageMap* s_page_map_;
     static thread_local size_t s_counter;
-    static thread_local size_t tid_;
-    static size_t page_size_;
+    static const size_t k_page_size_;
 };
 
 }  // namespace husky
