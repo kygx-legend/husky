@@ -38,6 +38,7 @@ class Page {
    public:
     using KeyT = size_t;
 
+    // TODO(lmatz): setting the path to keep temporary files.
     explicit Page(KeyT id, size_t page_size) : id_(id), all_bytes_(page_size) {
         this->file_name_ =
             "/var/tmp/page-" + std::to_string(base::get_current_time_milliseconds()) + "-" + std::to_string(id_);
