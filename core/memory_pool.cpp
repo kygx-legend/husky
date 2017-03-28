@@ -44,7 +44,7 @@ void MemoryPool::free_mem_pool() {
 
 MemoryPool::MemoryPool() {
     size_t max_thread_mem = 1024*1024*1024;
-    size_t page_size = PageStore::k_page_size_;
+    size_t page_size = PageStore::k_page_size;
     num_pages_ = max_thread_mem / page_size;
     DLOG_I << "MemoryPool num_pages:" << num_pages_;
     cache_ = new LRUCache<typename Page::KeyT, Page*>(num_pages_);
@@ -59,13 +59,13 @@ bool MemoryPool::request_page(const typename Page::KeyT& key, Page* page) {
     if (live_in_memory)
         return false;
     // if not, then check out the candidate that may be deleted by the cache in the 'put' operation
-    auto del_candidate1 = cache_->poll();
+    auto first_delete_candidate = cache_->poll();
     cache_->put(key, page);
     // check out the candiidate to be deleted again
-    auto del_candidate2 = cache_->poll();
+    auto second_delete_candidate = cache_->poll();
     // if they are not the same, which means the first candidate just get deleted
-    if (del_candidate1 != boost::none && del_candidate1 != del_candidate2) {
-        (*del_candidate1).second->swap_out_memory();
+    if (first_delete_candidate != boost::none && first_delete_candidate != second_delete_candidate) {
+        (*first_delete_candidate).second->swap_out_memory();
     }
     // first swap out the old page, then bring in the new page
     page->swap_in_memory();
