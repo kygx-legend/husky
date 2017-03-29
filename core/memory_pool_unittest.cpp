@@ -16,8 +16,16 @@ class TestMemoryPool : public testing::Test {
     ~TestMemoryPool() {}
 
    protected:
-    void SetUp() {}
-    void TearDown() {}
+    void SetUp() {
+        MemoryPool::free_mem_pool();
+        PageStore::drop_all_pages();
+        PageStore::free_page_map();
+    }
+    void TearDown() {
+        MemoryPool::free_mem_pool();
+        PageStore::drop_all_pages();
+        PageStore::free_page_map();
+    }
 };
 
 TEST_F(TestMemoryPool, Functional) {
