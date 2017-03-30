@@ -23,6 +23,8 @@ class PIObject {
     typedef int KeyT;
     int key;
 
+    PIObject() = default;
+
     explicit PIObject(KeyT key) { this->key = key; }
 
     const int& id() const { return key; }
