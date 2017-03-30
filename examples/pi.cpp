@@ -26,6 +26,16 @@ class PIObject {
     explicit PIObject(KeyT key) { this->key = key; }
 
     const int& id() const { return key; }
+
+    // Serialization and deserialization
+    friend husky::BinStream& operator<<(husky::BinStream& stream, const PIObject& v) {
+        stream << v.key;
+        return stream;
+    }
+    friend husky::BinStream& operator>>(husky::BinStream& stream, PIObject& v) {
+        stream >> v.key;
+        return stream;
+    }
 };
 
 void pi() {
