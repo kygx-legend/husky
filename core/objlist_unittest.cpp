@@ -197,7 +197,7 @@ TEST_F(TestObjList, EstimatedStorage) {
 TEST_F(TestObjList, Large) {
     auto& mem_pool = MemoryPool::get_mem_pool();
 
-    size_t max_thread_mem = 1024*1024*1024;
+    size_t max_thread_mem = mem_pool.max_thread_mem();
     int size_obj = sizeof(Obj);
     size_t page_size = 4*1024*1024;
 

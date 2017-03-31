@@ -29,7 +29,7 @@ class TestMemoryPool : public testing::Test {
 };
 
 TEST_F(TestMemoryPool, Functional) {
-    size_t num_pages = 256;
+    size_t num_pages = MemoryPool::get_mem_pool().capacity();
     size_t page_size = 4*1024*1024;
     auto& mem_pool = MemoryPool::get_mem_pool();
 
