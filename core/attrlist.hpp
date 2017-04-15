@@ -47,7 +47,7 @@ class AttrListBase {
     virtual void migrate(BinStream& bin, const size_t idx) = 0;
     virtual void process_bin(BinStream& bin, const size_t idx) = 0;
 
-    template <typename ObjT>
+    template <typename T, class A>
     friend class ObjList;
 };
 
@@ -183,7 +183,7 @@ class AttrList : public AttrListBase {
     AttrT default_val_;
     ObjListData<ObjT>* master_data_ptr_;
 
-    template <typename T>
+    template <typename T, class A>
     friend class ObjList;
 };
 }  // namespace husky

@@ -20,6 +20,7 @@
 
 #include "boost/random.hpp"
 
+#include "base/allocator.hpp"
 #include "base/exception.hpp"
 #include "base/serialization.hpp"
 
@@ -27,7 +28,7 @@ namespace husky {
 
 using base::BinStream;
 
-template <typename ObjT>
+template <typename ObjT, class Allocator = StdAllocator<ObjT>>
 class ObjListData {
    public:
     ObjListData() = default;
@@ -67,10 +68,10 @@ class ObjListData {
     }
 
    private:
-    std::vector<ObjT> data_;
+    std::vector<ObjT, Allocator> data_;
     size_t num_del_ = 0;
 
-    template <typename T>
+    template <typename T, class A>
     friend class ObjList;
 };
 

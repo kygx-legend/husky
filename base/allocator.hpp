@@ -1,4 +1,4 @@
-// Copyright 2016 Husky Team
+// Copyright 2017 Husky Team
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,18 +14,16 @@
 
 #pragma once
 
-// Include all necessary components in Husky.
+#include <memory>
 
-#include "base/allocator.hpp"
-#include "base/assert.hpp"
-#include "base/hash.hpp"
-#include "base/log.hpp"
-#include "base/serialization.hpp"
-#include "base/thread_support.hpp"
-#include "core/channel/channel_store.hpp"
-#include "core/combiner.hpp"
-#include "core/context.hpp"
-#include "core/executor.hpp"
-#include "core/job_runner.hpp"
-#include "core/mailbox.hpp"
-#include "core/objlist_store.hpp"
+#include "boost/align/aligned_allocator.hpp"
+
+namespace husky {
+
+template <typename T>
+using StdAllocator = std::allocator<T>;
+
+template <typename T, size_t aligned_size = 32>
+using AlignedAllocator = boost::alignment::aligned_allocator<T, aligned_size>;
+
+}  // namespace husky

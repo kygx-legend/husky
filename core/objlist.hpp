@@ -22,6 +22,7 @@
 
 #include "boost/random.hpp"
 
+#include "base/allocator.hpp"
 #include "base/assert.hpp"
 #include "base/disk_store.hpp"
 #include "base/exception.hpp"
@@ -60,7 +61,7 @@ class ObjListBase : public ChannelSource, public ChannelDestination {
     static thread_local size_t s_counter;
 };
 
-template <typename ObjT>
+template <typename ObjT, class Allocator = StdAllocator<ObjT>>
 class ObjList : public ObjListBase {
    public:
     // TODO(all): should be protected. The list should be constructed by possibly Context
@@ -78,7 +79,7 @@ class ObjList : public ObjListBase {
     ObjList(ObjList&&) = default;
     ObjList& operator=(ObjList&&) = default;
 
-    std::vector<ObjT>& get_data() { return objlist_data_.data_; }
+    auto& get_data() { return objlist_data_.data_; }
     std::vector<bool>& get_del_bitmap() { return del_bitmap_; }
 
     // Sort the objlist
@@ -278,8 +279,8 @@ class ObjList : public ObjListBase {
     }
 
     void clear_from_memory() {
-        std::vector<ObjT> tmp_obj;
-        std::vector<ObjT>& data = this->get_data();
+        std::vector<ObjT, Allocator> tmp_obj;
+        auto& data = this->get_data();
         data.swap(tmp_obj);
 
         std::vector<bool> tmp_bool;
@@ -305,13 +306,13 @@ class ObjList : public ObjListBase {
         for (auto iter = sample_container.begin(); iter != sample_container.end(); ++iter)
             bs << objlist_data_.data_[*iter];
 
-        std::vector<ObjT>& v = objlist_data_.data_;
+        auto& v = objlist_data_.data_;
         size_t ret = bs.size() * sizeof(char) * v.capacity() / sample_num;
         return ret;
     }
 
    protected:
-    ObjListData<ObjT> objlist_data_;
+    ObjListData<ObjT, Allocator> objlist_data_;
     size_t sorted_size_ = 0;
     std::vector<bool> del_bitmap_;
     std::unordered_map<typename ObjT::KeyT, size_t> hashed_objs_;
