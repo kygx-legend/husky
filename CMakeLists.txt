@@ -16,6 +16,21 @@
 project(husky)
 cmake_minimum_required(VERSION 3.0.2)
 
+# Check building system
+if(WIN32)
+  set(WINDOWS TRUE)
+elseif(UNIX AND NOT APPLE)
+  if(CMAKE_SYSTEM_NAME MATCHES ".*Linux")
+    set(LINUX TRUE)
+  endif()
+elseif(APPLE)
+  if(CMAKE_SYSTEM_NAME MATCHES ".*Darwin.*")
+    set(DARWIN TRUE)
+  elseif(CMAKE_SYSTEM_NAME MATCHES ".*MacOS.*")
+    set(MACOSX TRUE)
+  endif()
+endif()
+
 # CMake Options
 set(CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 14)

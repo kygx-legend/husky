@@ -96,12 +96,13 @@ else(MONGOCLIENT_FOUND)
     message (STATUS "Could NOT find MongoClient")
 endif(MONGOCLIENT_FOUND)
 if(WITHOUT_MONGODB)
-    unset(MONGOCLIENT_FOUND)
+    set(MONGOCLIENT_FOUND false)
     message(STATUS "Not using MongoClient due to WITHOUT_MONGODB option")
 endif(WITHOUT_MONGODB)
 
 ### RT ###
 
+if(MONGOCLIENT_FOUND AND NOT MACOSX)  # Mac OS X does not have librt
 find_library(RT_LIBRARY NAMES rt)
 if(RT_LIBRARY)
     set(RT_FOUND true)
@@ -114,6 +115,7 @@ if (RT_FOUND)
 else(RT_FOUND)
     message (STATUS "Could NOT find RT")
 endif(RT_FOUND)
+endif(MONGOCLIENT_FOUND AND NOT MACOSX)
 
 ### Thrift ###
 
